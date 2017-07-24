@@ -7,7 +7,7 @@ AWS.config.update({
 
 const dynamodb = new AWS.DynamoDB()
 
-const tables = ['Posts', 'Users']
+const tables = process.argv.slice(2);
 
 tables.map(TableName => {
   const params = {

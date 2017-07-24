@@ -1,6 +1,12 @@
 import React from 'react';
 import { compose, withHandlers, withState } from 'recompose';
-import { gql, graphql } from 'react-apollo'
+import { graphql } from 'react-apollo'
+import { gql } from 'react-apollo'
+
+import { post } from '../../graphql'
+
+const { POST_MUTATION } = post.mutation
+const { ALL_POSTS_QUERY } = post.query
 
 const enhance = compose(
   withState('description', 'setDescription', ''),
@@ -12,7 +18,36 @@ const enhance = compose(
     createPost: ({ description, mutate, setDescription, setTitle, title }) => async (e) => {
       e.preventDefault()
       try {
-        await mutate({ variables: { description, title } })
+        const input = { description, title }
+        const res = await mutate({
+          variables: { input },
+          // optimisticResponse: {
+          //   __typename: 'Mutation',
+          //   createPost: {
+          //     post: {
+          //       author: {
+          //         id: -1,
+          //         name: 'John Doe',
+          //         __typename: 'User',
+          //       },
+          //       description,
+          //       id: -1,
+          //       title,
+          //       __typename: 'Post',
+          //     },
+          //     __typename: 'PostPayload',
+          //   }
+          // },
+          // update: (proxy, { data: { createPost } }) => {
+          //   const { post } = createPost
+          //   const query = ALL_POSTS_QUERY
+          //   const data = proxy.readQuery({ query })
+          //   data.allPosts.push(post);
+          //
+          //   proxy.writeQuery({ query, data })
+          // },
+        })
+        console.log(res)
         setDescription('')
         setTitle('')
       } catch (err) {
@@ -53,18 +88,4 @@ const CreatePost = enhance(({ createPost, description, title, onChange }) => (
   </div>
 ));
 
-const POST_MUTATION = gql`
-  mutation Post($title: String!, $description: String!) {
-    createPost(title: $title, description: $description) {
-      id
-      title
-      description
-      author {
-        id
-        name
-      }
-    }
-  }
-`
-
-export default graphql(POST_MUTATION)(CreatePost);
+export default graphql(ALL_POSTS_QUERY)(graphql(POST_MUTATION)(CreatePost));

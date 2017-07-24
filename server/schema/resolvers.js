@@ -1,7 +1,8 @@
 import uuid from 'uuid';
-import { PubSub, withFilter } from 'graphql-subscriptions';
+import { PubSub } from 'graphql-subscriptions';
 
 const pubsub = new PubSub();
+const POST_ADDED_TOPIC = 'postAdded';
 
 export default {
   Query: {
@@ -33,16 +34,21 @@ export default {
     },
   },
   Mutation: {
-    createPost: async (root, req, { posts }) => {
+    createPost: async (root, { input }, { posts, users }) => {
+      // const Key = { id: '3b1884b8-9ee7-4d9d-ab2f-ff32bcd69b9a' }
+      // const user = await users.get({ Key })
+      //
+      // console.log('🌝', user.Item)
+
       const Item = {
         id: uuid.v4(),
-        authorId: '565dbdc0-36f2-4bba-be67-c126d0c71fff',
-        ...req
+        authorId: '3b1884b8-9ee7-4d9d-ab2f-ff32bcd69b9a',
+        ...input
       }
       await posts.create({ Item })
-      pubsub.publish('postAdded', { postAdded: Item })
+      await pubsub.publish(POST_ADDED_TOPIC, { [POST_ADDED_TOPIC]: Item })
 
-      return Item
+      return { post: Item }
     },
     updatePost: async (root, req, { posts }) => {
       const Key = { id: req.id }
@@ -61,23 +67,24 @@ export default {
 
       const { Attributes } = await posts.update(params)
 
-      return { ...Key, ...Attributes}
+      return { post: { ...Key, ...Attributes } }
     },
-    createUser: async (root, req, { users }) => {
-      const Item = { id: uuid.v4(), ...req }
+    createUser: async (root, { input }, { users }) => {
+      const Item = { id: uuid.v4(), ...input }
       await users.create({ Item })
+      console.log('🦑', Item, { user: Item })
 
-      return Item
+      return { user: Item }
     }
   },
   Subscription: {
     postAdded: {
-      subscribe: () => pubsub.asyncIterator('postAdded')
+      subscribe: () => pubsub.asyncIterator(POST_ADDED_TOPIC),
     }
   },
   Post: {
-    author: async(res, req, { users }) => {
-      const Key = { id: res.authorId }
+    author: async({ authorId }, req, { users }) => {
+      const Key = { id: authorId }
       const { Item } = await users.get({ Key })
 
       return Item

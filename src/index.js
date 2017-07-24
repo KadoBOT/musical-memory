@@ -1,32 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter as Router } from 'react-router-dom';
-import ApolloClient, { ApolloProvider } from 'react-apollo'
-import { createApolloFetch } from 'apollo-fetch';
-import { print } from 'graphql/language/printer';
-import { SubscriptionClient, addGraphQLSubscriptions } from 'subscriptions-transport-ws';
+import { ApolloProvider } from 'react-apollo'
 
-import './index.css';
 import Routes from './routes';
 import registerServiceWorker from './registerServiceWorker';
+import { browserClient } from '../server/apolloClient'
 
-
-const uri = '/graphql'
-const apolloFetch = createApolloFetch({ uri })
-const wsClient = new SubscriptionClient('ws://localhost:3001/subscriptions', {
-  reconnect: true,
-});
-const networkInterface = {
-  query: req => apolloFetch({ ...req, query: print(req.query) })
-}
-const networkInterfaceWithSubscriptions = addGraphQLSubscriptions(
-  networkInterface,
-  wsClient,
-);
-
-const client = new ApolloClient({
-  networkInterface: networkInterfaceWithSubscriptions
-})
+const client = browserClient()
 
 ReactDOM.render((
   <ApolloProvider client={client}>
