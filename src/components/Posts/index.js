@@ -1,43 +1,61 @@
 import React from 'react';
-import { compose, lifecycle } from 'recompose'
-import { graphql, gql } from 'react-apollo'
+import { compose, lifecycle, withHandlers } from 'recompose'
 
 import { post } from '../../graphql'
 import Post from './Post'
 import CreatePost from './CreatePost'
 
 const { POST_SUBSCRIPTION } = post.subscription
-const { withAllPostsQuery, ALL_POSTS_QUERY } = post.query
+const { withAllPostsQuery } = post.query
+const { DELETE_POST } = post.mutation
 
-const withData = graphql(ALL_POSTS_QUERY, {
-  name: 'allPostsQuery',
-  props: props => ({
-    subscribeToNewPosts: params => (
-      props.allPostsQuery.subscribeToMore({
+const enhance = compose(
+  withAllPostsQuery,
+  lifecycle({
+    componentWillMount() {
+      console.log('💩', this.props);
+      this.props.allPostsQuery.subscribeToMore({
         document: POST_SUBSCRIPTION,
-        updateQuery: (prev, { subscriptionData }) => {
-          if (!subscriptionData.data) {
-            return prev;
-          }
+        updateQuery: (prev, arg) => {
+          console.log('👯‍', prev, arg)
+          const { subscriptionData } = arg
           const newPost = subscriptionData.data.postAdded
           console.log('😆', {...prev, allPosts: [...prev.allPosts, newPost]})
           return {...prev, allPosts: [...prev.allPosts, newPost]}
         },
         onError: err => console.error("💩", err)
       })
-    )
-  })
-})
-
-const enhance = compose(
-  withData,
-  withAllPostsQuery,
-  lifecycle({
-    componentWillMount(){
-      console.log('🍌', this.props)
-      this.props.subscribeToNewPosts()
     }
-  })
+    // componentWillReceiveProps(newProps) {
+    //   console.log("💩", newProps)
+    //   if(!newProps.allPostsQuery.loading) {
+    //     if(this.unsubscribe) {
+    //       if (newProps.allPostsQuery !== this.props.allPostsQuery) {
+    //         this.unsubscribe()
+    //       } else {
+    //         return
+    //       }
+    //     }
+    //
+    //     console.log(newProps.allPostsQuery)
+    //
+        // this.unsubscribe = newProps.allPostsQuery.subscribeToMore({
+        //   document: POST_SUBSCRIPTION,
+        //   updateQuery: (prev, { subscriptionData }) => {
+        //     const newPost = subscriptionData.data.postAdded
+        //     console.log('😆', {...prev, allPosts: [...prev.allPosts, newPost]})
+        //     return {...prev, allPosts: [...prev.allPosts, newPost]}
+        //   },
+        //   onError: err => console.error("💩", err)
+        // })
+    //   }
+    // }
+  }),
+  // withHandlers({
+  //   handleClick: ({ mutate }) => async (id) => {
+  //     await mutate
+  //   }
+  // })
 )
 
 const Posts = enhance(({ allPostsQuery }) => {

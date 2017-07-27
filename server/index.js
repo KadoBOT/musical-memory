@@ -10,6 +10,7 @@ import staticCache from 'koa-static-cache'
 import bodyParser from 'koa-bodyparser'
 import Router from 'koa-router'
 import logger from 'koa-logger'
+import cors from 'koa-cors'
 import React from 'react';
 import { StaticRouter, matchPath } from 'react-router-dom';
 // import OpticsAgent from 'optics-agent';
@@ -28,39 +29,27 @@ import schema from './schema'
 import config from './config'
 import render from './render'
 import Routes from '../src/routes'
-import { serverClient } from './apolloClient'
+import { serverClient } from '../src/config/apolloClient'
 
 const PORT = 3001
 const router = new Router();
 const app = new koa();
-const client = serverClient()
 // const agent = new OpticsAgent.Agent({ apiKey: 'service:KadoBOT-Dynamo:mngP6ONbva10168i-1T36g' })
 const routes = ['/', '/example', '/example2']
-const pubsub = new PubSub();
 
 const start = async () => {
-  const ws = createServer(app.callback())
-
-  ws.listen(PORT, () => {
-    console.log(`🖥️  GraphQL Koa server running on port ${PORT}`);
-
-    // Set up the WebSocket for handling GraphQL subscriptions
-    new SubscriptionServer({
-      execute,
-      subscribe,
-      schema
-    }, {
-      server: ws,
-      path: '/subscriptions',
-    });
-  });
-
   try {
     const options = {
       context: dynamo,
       schema: schema
     }
 
+    const pubsub = new PubSub();
+    const ws = createServer(app.callback())
+
+    app.use(cors({
+    	origin: '*'
+    }))
     app.use(favicon());
     app.use(rt());
     app.use(compress());
@@ -99,6 +88,8 @@ const start = async () => {
         ctx.redirect(301, context.url)
       }
 
+      const client = serverClient(ctx)
+
       const item = await render(
         <ApolloProvider client={client}>
           <StaticRouter context={context} location={url}>
@@ -119,6 +110,23 @@ const start = async () => {
 
     app.use(router.routes());
     app.use(router.allowedMethods())
+
+    ws.listen(PORT, () => {
+      console.log(`🖥️  GraphQL Koa server running on port ${PORT}`);
+
+      // Set up the WebSocket for handling GraphQL subscriptions
+      new SubscriptionServer({
+        execute,
+        subscribe,
+        schema,
+        onConnect: (connectionParams, webSocket) => {
+          console.log('💩', connectionParams, webSocket)
+        },
+      }, {
+        server: ws,
+        path: '/subscriptions',
+      });
+    });
 
   } catch (err) {
     console.error(err)

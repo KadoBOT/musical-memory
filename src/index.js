@@ -5,7 +5,7 @@ import { ApolloProvider } from 'react-apollo'
 
 import Routes from './routes';
 import registerServiceWorker from './registerServiceWorker';
-import { browserClient } from '../server/apolloClient'
+import { browserClient } from './config/apolloClient'
 
 const client = browserClient()
 

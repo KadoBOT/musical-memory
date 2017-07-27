@@ -1,5 +1,5 @@
 import uuid from 'uuid';
-import { PubSub } from 'graphql-subscriptions';
+import { PubSub, withFilter } from 'graphql-subscriptions';
 
 const pubsub = new PubSub();
 const POST_ADDED_TOPIC = 'postAdded';
@@ -42,10 +42,15 @@ export default {
 
       const Item = {
         id: uuid.v4(),
-        authorId: '3b1884b8-9ee7-4d9d-ab2f-ff32bcd69b9a',
+        authorId: 'b96260fc-1d8f-4be2-991a-dc535f0d7b06',
         ...input
       }
+      Item.author = {
+        id: -1,
+        name: 'Test'
+      }
       await posts.create({ Item })
+      console.log({ [POST_ADDED_TOPIC]: Item });
       await pubsub.publish(POST_ADDED_TOPIC, { [POST_ADDED_TOPIC]: Item })
 
       return { post: Item }
@@ -69,6 +74,10 @@ export default {
 
       return { post: { ...Key, ...Attributes } }
     },
+    deletePost: async (root, { id }, { posts }) => {
+      const Key = { id }
+      return await posts.delete({ Key })
+    },
     createUser: async (root, { input }, { users }) => {
       const Item = { id: uuid.v4(), ...input }
       await users.create({ Item })
@@ -83,9 +92,11 @@ export default {
     }
   },
   Post: {
-    author: async({ authorId }, req, { users }) => {
+    author: async(res, req, context) => {
+      console.log('🤑', res, req, context)
+      const { authorId } = res
       const Key = { id: authorId }
-      const { Item } = await users.get({ Key })
+      const { Item } = await context.users.get({ Key })
 
       return Item
     }

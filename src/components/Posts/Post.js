@@ -3,7 +3,7 @@ import React from 'react';
 const Post = ({ post }) => (
   <article className="fl hidden w-100 pa2">
     <div className="br3 ba b--black-10">
-      <h1 className="f4 bg-near-white br3 br--top black-60 mv0 pv2 ph3 nowrap truncate">{post.title}<span className="f6 i"> by {post.author.name}</span></h1>
+      <h1 className="f4 bg-near-white br3 br--top black-60 mv0 pv2 ph3 nowrap truncate">{post.title}<span className="f6 i"> by {post.author.name}</span><span className="fr grow pointer">🗑</span></h1>
       <div className="pa3 bt b--black-10">
         <p className="f6 f5-ns lh-copy measure">{post.description}</p>
       </div>
