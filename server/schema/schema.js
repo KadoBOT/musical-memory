@@ -45,7 +45,6 @@ const typeDefs = `
     description: String!
   }
 
-
   input UpdatePostInput {
     id: ID!
     title: String!,

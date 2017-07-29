@@ -119,9 +119,6 @@ const start = async () => {
         execute,
         subscribe,
         schema,
-        onConnect: (connectionParams, webSocket) => {
-          console.log('💩', connectionParams, webSocket)
-        },
       }, {
         server: ws,
         path: '/subscriptions',

@@ -1,4 +1,4 @@
-import { gql } from 'react-apollo'
+import { graphql, gql } from 'react-apollo'
 
 export const POST_MUTATION = gql`
   mutation Post($input: CreatePostInput!) {
@@ -17,7 +17,12 @@ export const POST_MUTATION = gql`
 `
 
 export const DELETE_POST = gql`
-  mutation Post($id: ID!) {
-    deletepost(id: $id)
+  mutation DeletePost($id: ID!) {
+    deletePost(id: $id) {
+      post {
+        id
+      }
+    }
   }
 `
+export const deletePost = graphql(DELETE_POST)

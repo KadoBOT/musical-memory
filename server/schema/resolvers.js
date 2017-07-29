@@ -1,5 +1,5 @@
 import uuid from 'uuid';
-import { PubSub, withFilter } from 'graphql-subscriptions';
+import { PubSub } from 'graphql-subscriptions';
 
 const pubsub = new PubSub();
 const POST_ADDED_TOPIC = 'postAdded';
@@ -35,23 +35,14 @@ export default {
   },
   Mutation: {
     createPost: async (root, { input }, { posts, users }) => {
-      // const Key = { id: '3b1884b8-9ee7-4d9d-ab2f-ff32bcd69b9a' }
-      // const user = await users.get({ Key })
-      //
-      // console.log('🌝', user.Item)
-
       const Item = {
         id: uuid.v4(),
-        authorId: 'b96260fc-1d8f-4be2-991a-dc535f0d7b06',
+        authorId: 'b5c78e7a-fc37-436f-a341-4e89ec10eb1e',
         ...input
       }
-      Item.author = {
-        id: -1,
-        name: 'Test'
-      }
       await posts.create({ Item })
-      console.log({ [POST_ADDED_TOPIC]: Item });
-      await pubsub.publish(POST_ADDED_TOPIC, { [POST_ADDED_TOPIC]: Item })
+      console.log('🥈', Item)
+      pubsub.publish(POST_ADDED_TOPIC, { [POST_ADDED_TOPIC]: Item })
 
       return { post: Item }
     },
@@ -92,14 +83,17 @@ export default {
     }
   },
   Post: {
-    author: async(res, req, context) => {
-      console.log('🤑', res, req, context)
-      const { authorId } = res
+    author: async({ authorId }, req, context) => {
+      const obj = { a: '1', foo: '2', c: '3'}
+      console.log('🥇','foo' in obj) // true
       const Key = { id: authorId }
       const { Item } = await context.users.get({ Key })
 
       return Item
     }
+    // author: (res, req, context) => {
+    //   return {name: 'John Doe', id: '23997ef2-7098-4915-b0f5-23535b1bcd0e'}
+    // },
   },
   User: {
     posts: async({ id }, req, { posts }) => {

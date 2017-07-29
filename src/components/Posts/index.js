@@ -6,18 +6,18 @@ import Post from './Post'
 import CreatePost from './CreatePost'
 
 const { POST_SUBSCRIPTION } = post.subscription
-const { withAllPostsQuery } = post.query
-const { DELETE_POST } = post.mutation
+const { ALL_POSTS_QUERY, withAllPostsQuery } = post.query
+const { deletePost } = post.mutation
 
 const enhance = compose(
   withAllPostsQuery,
+  deletePost,
   lifecycle({
-    componentWillMount() {
+    componentDidMount() {
       console.log('💩', this.props);
       this.props.allPostsQuery.subscribeToMore({
         document: POST_SUBSCRIPTION,
         updateQuery: (prev, arg) => {
-          console.log('👯‍', prev, arg)
           const { subscriptionData } = arg
           const newPost = subscriptionData.data.postAdded
           console.log('😆', {...prev, allPosts: [...prev.allPosts, newPost]})
@@ -51,14 +51,21 @@ const enhance = compose(
     //   }
     // }
   }),
-  // withHandlers({
-  //   handleClick: ({ mutate }) => async (id) => {
-  //     await mutate
-  //   }
-  // })
+  withHandlers({
+    handleClick: ({ mutate }) => async (id) => await mutate({
+      variables: { id },
+      update: (proxy, res) => {
+        const query = ALL_POSTS_QUERY
+        const data = proxy.readQuery({ query })
+        data.allPosts = data.allPosts.filter(post => post.id !== id)
+
+        proxy.writeQuery({ query, data })
+      },
+    })
+  })
 )
 
-const Posts = enhance(({ allPostsQuery }) => {
+const Posts = enhance(({ allPostsQuery, handleClick }) => {
   if (allPostsQuery && allPostsQuery.loading) {
     return <div>Loading</div>
   }
@@ -74,7 +81,7 @@ const Posts = enhance(({ allPostsQuery }) => {
     <div className="cf w-100 pa2-ns">
       <CreatePost />
       {allPosts.map(post => (
-        <Post key={post.id} post={post} />
+        <Post key={post.id} post={post} onDelete={handleClick} />
       ))}
     </div>
   )
